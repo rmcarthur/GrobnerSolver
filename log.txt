@@ -1,0 +1,37 @@
+1/20/16
+
+
+TODO:
+Change DataFrame to a list,
+Only add monomials if not relatively prime.
+Add them to the list, add new an necessary pieces to the heap
+Make sure you keep track of the number of functions, s-polynomials, and monomials in the matrix for future use
+
+Finished:
+Add the S-polynomials to said matrix
+look in to how to sort a matrix based on the sorting of a list.
+    HERE WE ARE GOING TO USE np.argsort
+Built a max heap
+
+
+12/30/16 
+Todo today:
+Change DataFrame index to lisat
+Check for relative primality
+
+1/19/17:
+todo:
+Abananoed using dicts for now, want to make other progress.
+Pushed everything into a module, importable structure.
+Built a Power Basis module to test the code
+
+
+1/20/17:
+TODO: 
+Need to make sys append your current path directory instead of just mine, that way it works for any repo
+Figure out reduction for F4 algorithm, and final steps
+
+
+
+
+
