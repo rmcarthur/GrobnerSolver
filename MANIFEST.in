@@ -2,7 +2,8 @@
 include LICENSE
 
 # Include the data files
-recursive-include GrobnerSolver
-recursive-include Test
+recursive-include GrobnerSolver/grobner *
+recursive-include GrobnerSolver/polys *
+recursive-include Test/ *
 
 
