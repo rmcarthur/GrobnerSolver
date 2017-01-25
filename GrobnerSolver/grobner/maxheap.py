@@ -111,24 +111,3 @@ class MinHeap(MaxHeap):
             self._set.add(x.val)
 
 if __name__ == '__main__':
-    a0 = (0,0,1,0,0)
-    a1 = (0,1,1,3,1)
-    a2 = (0,1,1,3,0,0,0,1)
-    a3 = (2,2,2,3,4,1,4,3)
-    a4 = (0,1,1,2,2)
-    maxh = MaxHeap()
-    maxh.heappush(a1)
-    maxh.heappush(a3)
-    maxh.heappush(a0)
-    maxh.heappush(a2)
-    maxh.heappush(a4)
-    for i in xrange(2):
-        print(maxh.heappop())
-    maxh.heappush(a3)
-    maxh.heappush(a3)
-    for i in range(len(maxh.h)):
-        print(maxh.heappop())
-
-
-
-

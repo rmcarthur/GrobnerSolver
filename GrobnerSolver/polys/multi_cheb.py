@@ -219,12 +219,3 @@ class MultiCheb(object):
 
 
 if __name__ == '__main__':
-    test1 = np.array([[0,1],[2,1]])
-    #test2 = np.array([[2,2],[3,0]])
-    #cheb1 = MultiCheb(test1)
-    #cheb2 = MultiCheb(test2)
-    #new_cheb = cheb1*cheb2
-    #print(new_cheb.coeff)
-    #truth = np.array([[4, 3.5, 1],[5,9,1],[3,1.5,0]])
-    #print('Truth: \n{}'.format(truth))
-    

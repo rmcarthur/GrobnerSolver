@@ -204,12 +204,4 @@ class MultiPower(object):
 
 
 if __name__ == '__main__':
-    test1 = np.array([[0,1],[2,1]])
-    test2 = np.array([[2,2],[3,0]])
-    p1 = MultiPower(test1)
-    p2 = MultiPower(test2)
-    new_poly = p1*p2
-    print(new_poly.coeff)
-    truth = np.array([[0, 2, 2],[4,9,2],[6,3,0]])
-    print('Truth: \n{}'.format(truth))
     
