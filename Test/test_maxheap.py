@@ -1,7 +1,7 @@
 import numpy as np
 import os, sys
-sys.path.append('/'.join(os.path.dirname(os.path.abspath(__file__)).split('/')[:-2]))
-from cheb.grobner.maxheap import MaxHeap
+sys.path.append('/'.join(os.path.dirname(os.path.abspath(__file__)).split('/')[:-1]))
+from GrobnerSolver.grobner.maxheap import MaxHeap
 import unittest
 
 class TestMaxHeap(unittest.TestCase):

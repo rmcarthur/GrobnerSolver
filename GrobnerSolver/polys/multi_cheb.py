@@ -214,8 +214,3 @@ class MultiCheb(object):
         #TODO: You can use the lead_term kwarg to save some time
         return MultiCheb(new_coeff)
 
-
-
-
-
-if __name__ == '__main__':

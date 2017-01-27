@@ -202,6 +202,3 @@ class MultiPower(object):
         '''
         return MultiPower(fftconvolve(self.coeff, other.coeff))
 
-
-if __name__ == '__main__':
-    

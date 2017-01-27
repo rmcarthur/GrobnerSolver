@@ -6,7 +6,7 @@ import pandas as pd
 import maxheap
 import os,sys
 sys.path.append('/'.join(os.path.dirname(os.path.abspath(__file__)).split('/')[:-2]))
-from cheb.polys.multi_cheb import MultiCheb
+from GrobnerSolver.polys.multi_cheb import MultiCheb
 
 class Grobner(object):
 
@@ -74,6 +74,7 @@ class Grobner(object):
         b_coeffs[tuple(b.lead_term- lcm)] = 1
         b_ = MultiCheb(a_coeffs)
         s = a_ * a + b_ * b
+        self.polys.append(s)
         return s
 
     def _coprime(self,a,b):
@@ -96,7 +97,7 @@ class Grobner(object):
             if not self._coprime(a.lead_coeff,b.lead_coeff): #Checks for co-prime coeffs
                 s = self.calc_s(a,b) # Calculate the S polynomail
                 for idx in s.grevlex_gen():
-                    idx_term = maxheap.TermOrder(tuple(idx)) # For each term in polynomial, through it on the heap
+                    idx_term = maxheap.TermOrder(tuple(idx)) # For each term in polynomial, throw it on the heap
                     if not idx_term.val in self.term_set: # Add all new polynomials
                         self.term_set.add(idx_term.val)
                         self.label.append(tuple(idx))
@@ -105,4 +106,25 @@ class Grobner(object):
             self.matrix = self.matrix.append(submatrix)
             self.matrix = self.matrix.fillna(0)
             pass
+
+    def add_r_to_matrix(self):
+        '''
+        Makes Heap out of all monomials, and finds lcms to add them into the matrix
+        '''
+        leading_terms = [list(p.lead_term) for p in self.polys]
+        #print(leading_terms)
+        for monomial in self.term_set:
+            m = list(monomial)
+            for l in leading_terms:
+                if all([i<=j for i,j in zip(l,m)]) and len(l) == len(m): # If l | m
+                    print('LT | M')
+                    print(l,m)
+                    c = [j-i for i,j in zip(l,m)]
+                    print(c)
+
+
+
+        pass 
+
+
 

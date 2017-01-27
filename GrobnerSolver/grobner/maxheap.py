@@ -110,4 +110,3 @@ class MinHeap(MaxHeap):
             heapq.heappush(self.h, x)
             self._set.add(x.val)
 
-if __name__ == '__main__':
