@@ -17,6 +17,7 @@ class Grobner(object):
         '''
         self.polys = polys
         self.org_len = len(polys)
+        self.largest_mon = maxheap.TermOrder(tuple((0,0,0,0)))
         self.matrix = pd.DataFrame()
         self.label = []
         self.label_count = 0
@@ -101,6 +102,8 @@ class Grobner(object):
                     if not idx_term.val in self.term_set: # Add all new polynomials
                         self.term_set.add(idx_term.val)
                         self.label.append(tuple(idx))
+                        if idx_term > self.largest_mon:
+                            self.largest_mon = idx_term
                     submatrix[str(idx)] = pd.Series([s.coeff[tuple(idx)]]) # Would it be a good idea here to append to list at the same time as the matrix
                     #print(submatrix)
             self.matrix = self.matrix.append(submatrix)
@@ -111,16 +114,31 @@ class Grobner(object):
         '''
         Makes Heap out of all monomials, and finds lcms to add them into the matrix
         '''
-        leading_terms = [list(p.lead_term) for p in self.polys]
-        #print(leading_terms)
         for monomial in self.term_set:
             m = list(monomial)
-            for l in leading_terms:
-                if all([i<=j for i,j in zip(l,m)]) and len(l) == len(m): # If l | m
-                    print('LT | M')
-                    print(l,m)
+            for p in self.polys:
+                l = list(p.lead_term)
+
+                #TODO Make this a seperate function
+                if all([i<=j for i,j in zip(l,m)]) and len(l) == len(m): # If l | m 
+                    #print('LT | M')
+                    #print(l,m)
                     c = [j-i for i,j in zip(l,m)]
-                    print(c)
+                    #print(np.zeros(np.array(self.largest_mon.val) + 1)) # One added for dim.
+                    c_coeff = np.zeros(np.array(self.largest_mon.val)+1)
+                    c_coeff[tuple(c)] = 1 #TODO: Should this be one?
+                    print(c_coeff)
+                    #print(c)
+                    c = MultiCheb(c_coeff)
+                    print('C')
+                    print(c.coeff)
+                    print('P')
+                    print(p.coeff)
+                    r = c*p
+                    #_add_p_to_matrix()
+                    print(r.coeff)
+                    #print(c)
+                    #s = 
 
 
 

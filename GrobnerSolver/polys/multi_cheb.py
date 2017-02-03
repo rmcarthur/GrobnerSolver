@@ -1,6 +1,7 @@
 from __future__ import division, print_function
 import numpy as np
 from scipy.signal import fftconvolve, convolve
+import itertools
 
 """
 08/31/17
@@ -186,23 +187,49 @@ class MultiCheb(object):
 
     def __add__(self,other):
         '''
-        Here we add an addition class.
+        Here we add an addition method 
         '''
         return MultiCheb(self.coeff + other.coeff)
 
     def __sub__(self,other):
         '''
-        Here we subtract the two polys
+        Here we subtract the two polys coeffs
         '''
         return MultiCheb(self.coeff - other.coeff)
 
+
+    def match_size(self,a,b):
+        '''
+        Matches the size of the polynomials
+        '''
+        new_shape = [max(i,j) for i,j in itertools.izip_longest(a.shape, b.shape)]
+        add_a = [i-j for i,j in zip(new_shape, a.shape)]
+        add_b = [i-j for i,j in zip(new_shape, b.shape)]
+        add_a_list = np.zeros((2,len(new_shape)))
+        add_b_list = np.zeros((2,len(new_shape)))
+        add_a_list[:,1] = add_a
+        add_b_list[:,1] = add_b
+        a = MultiCheb(np.pad(a.coeff,add_a_list.astype(int),'constant'))
+        b = MultiCheb(np.pad(b.coeff,add_b_list.astype(int),'constant'))
+        return a,b
+
+
+
+        
+        
+
     def __mul__(self,other):
         '''
-        here we add leading terms?
+        Multiply by convolving intelligently
+        CURRENTLY ONLY DOING 2-D support
+        Manually make 1, 3D support then add n-dim support
         '''
-        c = other.coeff[::-1, ::-1]
-        p1 = convolve(self.coeff,other.coeff)
-        temp = convolve(self.coeff,c)
+        # Check and see if same size
+        new_self, new_other = self.match_size(self,other)
+        # If not sae size, pad the smaller one with zeros to match size
+        c = new_other.coeff[::-1, ::-1]
+        p1 = convolve(new_self.coeff,new_other.coeff)
+        temp = convolve(new_self.coeff,c)
         half = len(p1)//2
         p2 = temp[:half+1,:][::-1] + temp[half:,:]
         p2[0,:] = p2[0,:]/2.
