@@ -6,7 +6,9 @@ import pandas as pd
 import maxheap
 import os,sys
 sys.path.append('/'.join(os.path.dirname(os.path.abspath(__file__)).split('/')[:-2]))
-from cheb.polys.multi_cheb import MultiCheb
+from GrobnerSolver.polys.multi_cheb import MultiCheb
+from GrobnerSolver.polys.multi_power import MultiPower
+from scipy.linalg import lu
 
 class Grobner(object):
 
@@ -16,7 +18,8 @@ class Grobner(object):
         self.org_len - Orginal length of the polys passed in
         '''
         self.polys = polys
-        self.org_len = len(polys)
+        self.f_len = len(polys)
+        self.largest_mon = maxheap.TermOrder(tuple((0,0,0,0)))
         self.matrix = pd.DataFrame()
         self.label = []
         self.label_count = 0
@@ -24,6 +27,16 @@ class Grobner(object):
         self.term_set = set()
         self.term_dict = {}
         self._build_matrix()
+
+    def solve(self):
+        while True:
+            self._build_matrix()
+            self.
+            P,L,U = lu(self.matrix.values)
+            P_argmax = np.argmax(P,axis=1)
+            rows_to_keep = P_argmax < self.fs_len
+            new_fs = U[rows_to_keep])
+
 
     def _build_matrix(self):
         """
@@ -65,15 +78,24 @@ class Grobner(object):
         Calculates the S-polynomial of a,b
         '''
         lcm = self._lcm(a,b)
-        # Change this to be recipricol of coeff to cancel out everything
         a_coeffs = np.zeros_like(a.coeff)
-        a_coeffs[tuple(a.lead_term- lcm)] = 1
-        a_ = MultiCheb(a_coeffs)
-    
+        a_coeffs[tuple([i-j for i,j in zip(lcm, a.lead_term)])] = 1./(a.coeff[tuple(a.lead_term)])
+
         b_coeffs = np.zeros_like(b.coeff)
-        b_coeffs[tuple(b.lead_term- lcm)] = 1
-        b_ = MultiCheb(a_coeffs)
-        s = a_ * a + b_ * b
+        b_coeffs[tuple([i-j for i,j in zip(lcm, b.lead_term)])] = 1./(b.coeff[tuple(b.lead_term)])
+
+        if isinstance(a, MultiPower) and isinstance(b,MultiPower):
+            b_ = MultiPower(b_coeffs)
+            a_ = MultiPower(a_coeffs)
+        elif isinstance(a, MultiCheb) and isinstance(b,MultiCheb):
+            b_ = MultiCheb(b_coeffs)
+            a_ = MultiCheb(a_coeffs)
+        else:
+            raise ValueError('Incompatiable polynomials')
+        a1 = a_*a
+        b1 = b_*b
+        s = a_ * a - b_ * b
+        #self.polys.append(s)
         return s
 
     def _coprime(self,a,b):
@@ -91,49 +113,51 @@ class Grobner(object):
         This takes all possible combinaions of s polynomials and adds them to the Grobner Matrix
         '''
         for a, b in itertools.combinations(self.polys, 2):
-            #print(a.lead_coeff)
             submatrix = pd.DataFrame()
             if not self._coprime(a.lead_coeff,b.lead_coeff): #Checks for co-prime coeffs
                 s = self.calc_s(a,b) # Calculate the S polynomail
+
                 for idx in s.grevlex_gen():
-                    idx_term = maxheap.TermOrder(tuple(idx)) # For each term in polynomial, through it on the heap
+                    idx_term = maxheap.TermOrder(tuple(idx)) # For each term in polynomial, throw it on the heap
                     if not idx_term.val in self.term_set: # Add all new polynomials
                         self.term_set.add(idx_term.val)
                         self.label.append(tuple(idx))
-                    submatrix[str(idx)] = pd.Series([s.coeff[tuple(idx)]]) # Would it be a good idea here to append to list at the same time as the matrix
-                    #print(submatrix)
+                        if idx_term > self.largest_mon:
+                            self.largest_mon = idx_term
+                    submatrix[str(idx)] = pd.Series([s.coeff[tuple(idx)]]) 
             self.matrix = self.matrix.append(submatrix)
             self.matrix = self.matrix.fillna(0)
+            self.fs_len = len(self.matrix.index)
             pass
 
-if __name__ == '__main__':
-   #a1 = np.arange(3**3).reshape(3,3,3) 
-   #a2 = np.arange(3**3).reshape(3,3,3) 
-   #a1[0,0,0] = 7
-   #a2[1,1,1] = 9
+    def add_poly_to_matrix(self,p):
+        submatrix = pd.DataFrame()
+        for idx in p.grevlex_gen():
+            submatrix[str(idx)] = pd.Series([p.coeff[tuple(idx)]])
+        self.matrix = self.matrix.append(submatrix)
+        self.matrix = self.matrix.fillna(0)
+        pass
 
-   a1 = np.arange(2**2).reshape(2,2)
-   a2 = np.array([[2,2],[2,2]])
-   a3 = np.array([[1,0],[2,0]])
-   c1 = MultiCheb(a1)
-   c2 = MultiCheb(a2)
-   c3 = MultiCheb(a3)
-   c_list = [c1, c2, c3]
-   grob = Grobner(c_list)
-   grob.add_s_to_matrix()
-   #print(grob.label)
-   print(grob.matrix)
+    def add_r_to_matrix(self):
+        '''
+        Makes Heap out of all monomials, and finds lcms to add them into the matrix
+        '''
+        for monomial in self.term_set:
+            m = list(monomial)
+            for p in self.polys:
+                l = list(p.lead_term)
+                if all([i<=j for i,j in zip(l,m)]) and len(l) == len(m):
+                    c = [j-i for i,j in zip(l,m)]
+                    c_coeff = np.zeros(np.array(self.largest_mon.val)+1)
+                    c_coeff[tuple(c)] = 1 
+                    if isinstance(p, MultiCheb):
+                        c = MultiCheb(c_coeff)
+                    elif isinstance(p,MultiPower):
+                        c = MultiPower(c_coeff)
+                    r = c*p
+                    self.add_poly_to_matrix(r)
+                    break
+        pass 
 
-   #a3 = np.array([[0,0],[0,1]])
-   #a4 = np.array([[0,1],[0,0]])
-   #c3 = MultiCheb(a3)
-   #c4 = MultiCheb(a4)
-   #grob2 = Grobner([c3,c4]) 
-   #s = grob2.calc_s(c3, c4)
-   #print(s.coeff)
-   #maxh = maxheap.MaxHeap()
-   #maxh.heappush((2,1,0,0,0,0))
-   #maxh.heappush((1,2,2,4,2,4))
-   #maxh.heappush((2,1,2,4,2,4))
-   #print(maxh.heappop())
-   #print(maxh.heappop())
+
+

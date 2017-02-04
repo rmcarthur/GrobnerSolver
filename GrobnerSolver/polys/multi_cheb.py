@@ -1,6 +1,7 @@
 from __future__ import division, print_function
 import numpy as np
 from scipy.signal import fftconvolve, convolve
+import itertools
 
 """
 08/31/17
@@ -145,8 +146,6 @@ class MultiCheb(object):
     def __lt__(self, other):
         '''
         Magic method for determing which polynomial is smaller
-        #TODO: Fix so this works for things of different lengths
-        #NOT QUITE WORKING
         '''
         if sum(self.lead_term) < sum(other.lead_term):
             return True
@@ -167,7 +166,6 @@ class MultiCheb(object):
     def __gt__(self, other):
         '''
         Magic method for determing which polynomial is smaller
-        #TODO: Fix so this works for things of different lengths
         '''
         if sum(self.lead_term) < sum(other.lead_term):
             return False
@@ -186,23 +184,46 @@ class MultiCheb(object):
 
     def __add__(self,other):
         '''
-        Here we add an addition class.
+        Here we add an addition method 
         '''
         return MultiCheb(self.coeff + other.coeff)
 
     def __sub__(self,other):
         '''
-        Here we subtract the two polys
+        Here we subtract the two polys coeffs
         '''
         return MultiCheb(self.coeff - other.coeff)
 
+
+    def match_size(self,a,b):
+        '''
+        Matches the size of the polynomials
+        '''
+        new_shape = [max(i,j) for i,j in itertools.izip_longest(a.shape, b.shape)]
+        add_a = [i-j for i,j in zip(new_shape, a.shape)]
+        add_b = [i-j for i,j in zip(new_shape, b.shape)]
+        add_a_list = np.zeros((2,len(new_shape)))
+        add_b_list = np.zeros((2,len(new_shape)))
+        add_a_list[:,1] = add_a
+        add_b_list[:,1] = add_b
+        a = MultiCheb(np.pad(a.coeff,add_a_list.astype(int),'constant'))
+        b = MultiCheb(np.pad(b.coeff,add_b_list.astype(int),'constant'))
+        return a,b
+
     def __mul__(self,other):
         '''
-        here we add leading terms?
+        Multiply by convolving intelligently
+        CURRENTLY ONLY DOING 2-D support
+        Manually make 1, 3D support then add n-dim support
         '''
-        c = other.coeff[::-1, ::-1]
-        p1 = convolve(self.coeff,other.coeff)
-        temp = convolve(self.coeff,c)
+        # Check and see if same size
+        if self.shape != other.shape:
+            new_self, new_other = self.match_size(self,other)
+        else:
+            new_self, new_other = self, other
+        c = new_other.coeff[::-1, ::-1]
+        p1 = convolve(new_self.coeff,new_other.coeff)
+        temp = convolve(new_self.coeff,c)
         half = len(p1)//2
         p2 = temp[:half+1,:][::-1] + temp[half:,:]
         p2[0,:] = p2[0,:]/2.
@@ -214,17 +235,3 @@ class MultiCheb(object):
         #TODO: You can use the lead_term kwarg to save some time
         return MultiCheb(new_coeff)
 
-
-
-
-
-if __name__ == '__main__':
-    test1 = np.array([[0,1],[2,1]])
-    #test2 = np.array([[2,2],[3,0]])
-    #cheb1 = MultiCheb(test1)
-    #cheb2 = MultiCheb(test2)
-    #new_cheb = cheb1*cheb2
-    #print(new_cheb.coeff)
-    #truth = np.array([[4, 3.5, 1],[5,9,1],[3,1.5,0]])
-    #print('Truth: \n{}'.format(truth))
-    

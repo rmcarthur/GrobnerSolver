@@ -1,7 +1,7 @@
 import numpy as np
 import os,sys
-sys.path.append('/'.join(os.path.dirname(os.path.abspath(__file__)).split('/')[:-2]))
-from cheb.polys.multi_power import MultiPower
+sys.path.append('/'.join(os.path.dirname(os.path.abspath(__file__)).split('/')[:-1]))
+from GrobnerSolver.polys.multi_power import MultiPower
 import unittest
 
 class TestMultiCheb(unittest.TestCase):

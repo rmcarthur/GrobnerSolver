@@ -1,7 +1,7 @@
 import numpy as np
 import os, sys
-sys.path.append('/'.join(os.path.dirname(os.path.abspath(__file__)).split('/')[:-2]))
-from cheb.polys.multi_cheb import MultiCheb
+sys.path.append('/'.join(os.path.dirname(os.path.abspath(__file__)).split('/')[:-1]))
+from GrobnerSolver.polys.multi_cheb import MultiCheb
 import unittest
 
 class TestMultiCheb(unittest.TestCase):
@@ -22,6 +22,18 @@ class TestMultiCheb(unittest.TestCase):
         new_cheb = cheb1*cheb2
         truth = np.array([[4, 3.5, 1],[5,9,1],[3,1.5,0]])
         test = new_cheb.coeff.all() == truth.all()
+        self.assertTrue(test)
+
+    def test_mult_diff(self):
+        '''
+        #TODO: Verify by hand...
+        Test implementation with different shape sizes
+        '''
+        c1 = MultiCheb(np.arange(0,4).reshape(2,2))
+        c2 = MultiCheb(np.ones((2,1)))
+        p = c1*c2
+        truth = np.array([[1,2.5,0],[2,4,0],[1,1.5,0]])
+        test = p.coeff.all() == truth.all()
         self.assertTrue(test)
         
 
