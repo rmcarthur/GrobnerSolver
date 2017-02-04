@@ -3,6 +3,7 @@ import sys, os
 import numpy as np
 sys.path.append('/'.join(os.path.dirname(os.path.abspath(__file__)).split('/')[:-1]))
 from GrobnerSolver.polys.multi_cheb import MultiCheb
+from GrobnerSolver.polys.multi_power import MultiPower
 from GrobnerSolver.grobner.grobner import Grobner
 from GrobnerSolver.grobner import maxheap
 
@@ -22,11 +23,12 @@ c3 = MultiCheb(a3)
 c_list = [c1, c2, c3]
 grob = Grobner(c_list)
 grob.add_s_to_matrix()
-print(grob.polys)
 #print(grob.label)
-print(grob.matrix)
+#print('mat')
+#print(grob.matrix)
 grob.add_r_to_matrix()
-
+#print(grob.matrix)
+#
 #a3 = np.array([[0,0],[0,1]])
 #a4 = np.array([[0,1],[0,0]])
 #c3 = MultiCheb(a3)
@@ -42,4 +44,11 @@ grob.add_r_to_matrix()
 #print(maxh.heappop())
 
 
+
+#a2 = np.array([[0,0,0,1],[0,-2,0,0],[0,0,0,0],[0,0,0,0]])
+#a3 = np.array([[0,1,0,0],[0,0,1,0],[-2,0,0,0],[0,0,0,0]])
+#c2 = MultiPower(a2.T)
+#c3 = MultiPower(a3.T)
+#grob = Grobner([c2,c3])
+#print(np.round(grob.calc_s(c2,c3).coeff))
 

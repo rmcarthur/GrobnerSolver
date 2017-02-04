@@ -9,8 +9,7 @@ Creates a class of n-dim Power Basis polynomials. Tracks leading term,
 coefficents, and inculdes basic operations (+,*,scaler multip, etc.)
 Assumes GRevLex ordering, but should be extended.
 Mostly used for testing vs other solvers
-"""
-
+""" 
 
 class MultiPower(object):
     """

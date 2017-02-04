@@ -146,8 +146,6 @@ class MultiCheb(object):
     def __lt__(self, other):
         '''
         Magic method for determing which polynomial is smaller
-        #TODO: Fix so this works for things of different lengths
-        #NOT QUITE WORKING
         '''
         if sum(self.lead_term) < sum(other.lead_term):
             return True
@@ -168,7 +166,6 @@ class MultiCheb(object):
     def __gt__(self, other):
         '''
         Magic method for determing which polynomial is smaller
-        #TODO: Fix so this works for things of different lengths
         '''
         if sum(self.lead_term) < sum(other.lead_term):
             return False
@@ -213,11 +210,6 @@ class MultiCheb(object):
         b = MultiCheb(np.pad(b.coeff,add_b_list.astype(int),'constant'))
         return a,b
 
-
-
-        
-        
-
     def __mul__(self,other):
         '''
         Multiply by convolving intelligently
@@ -225,8 +217,10 @@ class MultiCheb(object):
         Manually make 1, 3D support then add n-dim support
         '''
         # Check and see if same size
-        new_self, new_other = self.match_size(self,other)
-        # If not sae size, pad the smaller one with zeros to match size
+        if self.shape != other.shape:
+            new_self, new_other = self.match_size(self,other)
+        else:
+            new_self, new_other = self, other
         c = new_other.coeff[::-1, ::-1]
         p1 = convolve(new_self.coeff,new_other.coeff)
         temp = convolve(new_self.coeff,c)
