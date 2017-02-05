@@ -29,13 +29,15 @@ class Grobner(object):
         self._build_matrix()
 
     def solve(self):
-        while True:
+        for i in xrange(2):
             self._build_matrix()
-            self.
+            self.add_s_to_matrix()
+            self.add_r_to_matrix()
             P,L,U = lu(self.matrix.values)
             P_argmax = np.argmax(P,axis=1)
             rows_to_keep = P_argmax < self.fs_len
-            new_fs = U[rows_to_keep])
+            new_fs = U[rows_to_keep]
+            print(new_fs)
 
 
     def _build_matrix(self):
