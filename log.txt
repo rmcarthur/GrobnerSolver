@@ -30,8 +30,29 @@ Built a Power Basis module to test the code
 TODO: 
 Need to make sys append your current path directory instead of just mine, that way it works for any repo
 Figure out reduction for F4 algorithm, and final steps
+Set an attribute to take in [tuple(c)] and extend the size of the matrix
+Handle case when len of poly and monomials in add_r_to_matrix are different lengths
+Make a function for adding a polynomial to the matrix, and use that all over
 
 
+1/27/17:
+TODO:
+Make a function for adding a polynomial to the matrix, and use that all over
+
+
+2/3/17:
+TODO:
+Add a monomial multiplication that is more numerically stable that just uses shifting of the matrix
+Make conditions to only check new f's and s's, since the f's and old s's don't need to be checked against eachother. 
+Remove entirely 0 rows and columns when doing multiplication
+Verify that the loop is converging to the correct grobner basis, and then verify it is working in cheb basis
+
+
+
+
+Q's for the big man:
+1. Do the f's and old s's need to be checked in each iteration of the algorithm?
+2. When I do the LU Decomposition, do I just take the PLU, and grab the columns I care about?
 
 
 
