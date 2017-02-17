@@ -9,16 +9,31 @@ from GrobnerSolver.grobner import maxheap
 
 
 
-a1 = np.arange(2**2).reshape(2,2)
-a2 = np.array([[2,2],[2,2]])
-a3 = np.array([[1,0],[2,0]])
-c1 = MultiCheb(a1)
-c2 = MultiCheb(a2)
-c3 = MultiCheb(a3)
-c_list = [c1, c2, c3]
-grob = Grobner(c_list)
+
+
+a1 = np.array([[0,1],[-2,0]])
+a2 = np.array([[1,0],[0,2]])
+c1= MultiPower(a1)
+c2 = MultiPower(a2)
+grob = Grobner([c1,c2])
 grob.solve()
 
+
+
+
+
+#
+#a1 = np.arange(2**2).reshape(2,2)
+#a2 = np.array([[2,2],[2,2]])
+#a3 = np.array([[1,0],[2,0]])
+#c1 = MultiCheb(a1)
+#c2 = MultiCheb(a2)
+#c3 = MultiCheb(a3)
+#
+#c_list = [c1, c2, c3]
+#grob = Grobner(c_list)
+#grob.solve()
+#
 
 
 
