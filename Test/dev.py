@@ -61,12 +61,41 @@ grob.solve()
 #print(maxh.heappop())
 #print(maxh.heappop())
 
-
-
-#a2 = np.array([[0,0,0,1],[0,-2,0,0],[0,0,0,0],[0,0,0,0]])
-#a3 = np.array([[0,1,0,0],[0,0,1,0],[-2,0,0,0],[0,0,0,0]])
+#
+#a2 = np.array([[0,0,1],[-2,0,0],[0,0,0]])
+#a3 = np.array([[1,0,0],[0,1,0],[-2,0,0]])
 #c2 = MultiPower(a2.T)
 #c3 = MultiPower(a3.T)
-#grob = Grobner([c2,c3])
-#print(np.round(grob.calc_s(c2,c3).coeff))
+#grob =Grobner([c2,c3])
+#grob._build_matrix()
+#print(grob.matrix)
+#grob.add_s_to_matrix()
+#print(grob.matrix)
+
+
+
+#print(grob.matrix.columns)
+#print(grob.matrix[['[3 1]','[0 1]']])
+#self.add_r_to_matrix()
+#P,L,U = lu(self.matrix.values)
+#P_argmax = np.argmax(P,axis=1)
+#rows_to_keep = P_argmax < self.fs_len
+#new_fs = U[rows_to_keep]
+#new_fs = pd.DataFrame(new_fs,columns=self.matrix.columns)
+#new_fs = new_fs[(new_fs.T != 0).any()] # Remove all totally zero rows
+#new_fs = new_fs.loc[:, (new_fs != 0).any(axis=0)] # Remove all totally zero columns
+##print(new_fs)
+##print(list(self.largest_mon.val))
+##print(new_fs.index)
+#self.polys = self.make_poly_list(new_fs)
+#self.f_diff = len(self.polys) - self.f_len
+#self.f_len = len(self.polys)
+#
+
+#g_basis = grob.solve()
+#for g in g_basis:
+#    print(g.coeff)
+
+
+
 
