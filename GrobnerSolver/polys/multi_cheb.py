@@ -77,6 +77,7 @@ class MultiCheb(object):
         '''
         yields grevlex ordering co-ordinates in order to find 
         the leading coefficent
+        #TODO: Currently this is requiring square matricies, let's make it work for not square.
         '''
         self.state_sum = sum(np.array(self.shape)-1)
         if current == None:
@@ -103,7 +104,10 @@ class MultiCheb(object):
                 yield current
 
     def _calc_low_state(self,current):
+        #print(self.shape)
         max_term = np.max(self.shape) -1
+        #print('max_term')
+        #print(max_term)
         if self.state_sum < max_term:
             low_state = np.zeros_like(current)
             low_state[-1] = self.state_sum
@@ -232,6 +236,10 @@ class MultiCheb(object):
         p_z = np.zeros_like(p1)
         p_z[:half+1, :half+1] = p2
         new_coeff = .5*(p1 + p_z)
+        print(new_coeff)
+        new_coeff = np.around(new_coeff, 6)
+        print(new_coeff)
+        raw_input()
         #TODO: You can use the lead_term kwarg to save some time
         return MultiCheb(new_coeff)
 

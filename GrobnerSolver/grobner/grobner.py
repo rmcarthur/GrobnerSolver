@@ -17,19 +17,31 @@ class Grobner(object):
         polys -- a list of polynomials that generate your ideal
         self.org_len - Orginal length of the polys passed in
         '''
+        if isinstance(polys[0], MultiCheb):
+            self.cheb_type = True
+        else:
+            self.cheb_type = False
+            print('Power')
         self.polys = polys
         self.f_len = len(polys)
-        self.largest_mon = maxheap.TermOrder(tuple((0,0,0,0)))
+        self.largest_mon = maxheap.TermOrder((0,0))
         self.matrix = pd.DataFrame()
         self.label = []
         self.label_count = 0
         self.np_matrix = np.zeros([0,0])
         self.term_set = set()
         self.term_dict = {}
-        self._build_matrix()
+        self.f_diff = 1
+        #self.solve()
 
     def solve(self):
-        for i in xrange(2):
+        '''
+        Solves for entire Grobner Basis
+        '''
+        count=0
+        while self.f_diff !=0:
+            print("STEP {}".format(count + 1))
+            raw_input()
             self._build_matrix()
             self.add_s_to_matrix()
             self.add_r_to_matrix()
@@ -37,20 +49,64 @@ class Grobner(object):
             P_argmax = np.argmax(P,axis=1)
             rows_to_keep = P_argmax < self.fs_len
             new_fs = U[rows_to_keep]
-            print(new_fs)
+            new_fs = pd.DataFrame(new_fs,columns=self.matrix.columns)
+            new_fs = new_fs[(new_fs.T != 0).any()] # Remove all totally zero rows
+            new_fs = new_fs.loc[:, (new_fs != 0).any(axis=0)] # Remove all totally zero columns
+            #print(new_fs)
+            #print(list(self.largest_mon.val))
+            #print(new_fs.index)
+            self.polys = self.make_poly_list(new_fs)
+            self.f_diff = len(self.polys) - self.f_len
+            self.f_len = len(self.polys)
+            #self.polys = self.make_poly_list(new_fs)
+            count += 1
+            print(count)
+            print(len(self.polys))
+            for p in self.polys:
+                print(p.coeff)
+        return self.polys
 
+
+            
+
+    def make_poly_list(self,df):
+        '''
+        make a list of polynomials based on rows of dataframe
+        '''
+        print(self.largest_mon.val)
+        size = list(self.largest_mon.val)
+        size  = np.array(size + [len(df.index)-1])
+        print(size)
+        new_f_list = np.squeeze(np.zeros(size+1))
+        print('new f')
+        print(new_f_list)
+        for i in df.columns:
+            index = [int(j) for j in df[i].name[1:-1].split()]
+            print('index')
+            print(index)
+            #TODO: Fix this for multiple dimensions
+            new_f_list[index[1],index[0],:] = df[i].values
+        f_list = []
+        for i in xrange(len(df.index)):
+            #TODO: Fix this for multiple dimensions
+            if self.cheb_type:
+                #print('CHEB')
+                f_list.append(MultiCheb(new_f_list[:,:,i]))
+            else:
+                #print('Power')
+                f_list.append(MultiPower(new_f_list[:,:,i]))
+        return f_list
+        pass
 
     def _build_matrix(self):
         """
         #TODO: Fix this to just use numpy arrays. You can sort, using numpy arg sort
-    
         returns:
         matrix - Pandas DataFrame object with the polynomials indexed
         """
         for poly in self.polys:
             #For each polynomial, make a matrix object, and add its column
             submatrix = pd.DataFrame()
-            sub_np = []
             for idx in poly.grevlex_gen():
                 idx_term = maxheap.TermOrder(tuple(idx)) # Used to get an ordering on terms
                 if not idx_term.val in self.term_set:
@@ -73,6 +129,7 @@ class Grobner(object):
         returns:
         LCM - the np.array of the lead_term of the lcm polynomial
         '''
+        print(a.lead_term, b.lead_term)
         return np.maximum(a.lead_term, b.lead_term)
     
     def calc_s(self,a,b):
@@ -80,6 +137,8 @@ class Grobner(object):
         Calculates the S-polynomial of a,b
         '''
         lcm = self._lcm(a,b)
+        print("LCM")
+        print(lcm)
         a_coeffs = np.zeros_like(a.coeff)
         a_coeffs[tuple([i-j for i,j in zip(lcm, a.lead_term)])] = 1./(a.coeff[tuple(a.lead_term)])
 
@@ -97,6 +156,7 @@ class Grobner(object):
         a1 = a_*a
         b1 = b_*b
         s = a_ * a - b_ * b
+        print(s.coeff)
         #self.polys.append(s)
         return s
 
@@ -118,26 +178,40 @@ class Grobner(object):
             submatrix = pd.DataFrame()
             if not self._coprime(a.lead_coeff,b.lead_coeff): #Checks for co-prime coeffs
                 s = self.calc_s(a,b) # Calculate the S polynomail
+                print(s)
 
                 for idx in s.grevlex_gen():
+                    #print(idx)
                     idx_term = maxheap.TermOrder(tuple(idx)) # For each term in polynomial, throw it on the heap
                     if not idx_term.val in self.term_set: # Add all new polynomials
                         self.term_set.add(idx_term.val)
                         self.label.append(tuple(idx))
+                        #print(idx_term)
                         if idx_term > self.largest_mon:
+                            #print('new largest mon')
+                            #print(self.largest_mon)
                             self.largest_mon = idx_term
                     submatrix[str(idx)] = pd.Series([s.coeff[tuple(idx)]]) 
+                print(submatrix)
             self.matrix = self.matrix.append(submatrix)
             self.matrix = self.matrix.fillna(0)
+            self.matrix = self.matrix[(self.matrix.T != 0).any()] # Remove all totally zero rows
             self.fs_len = len(self.matrix.index)
-            pass
+        #print('S polynomials added')
+        #print(self.matrix)
 
     def add_poly_to_matrix(self,p):
         submatrix = pd.DataFrame()
         for idx in p.grevlex_gen():
             submatrix[str(idx)] = pd.Series([p.coeff[tuple(idx)]])
+        print('r to add')
+        print(submatrix)
+        if all(v==0 for v in submatrix):
+            print('all zeros')
+            return
         self.matrix = self.matrix.append(submatrix)
         self.matrix = self.matrix.fillna(0)
+        self.matrix = self.matrix[(self.matrix.T != 0).any()] # Remove all totally zero rows
         pass
 
     def add_r_to_matrix(self):
@@ -148,17 +222,37 @@ class Grobner(object):
             m = list(monomial)
             for p in self.polys:
                 l = list(p.lead_term)
-                if all([i<=j for i,j in zip(l,m)]) and len(l) == len(m):
+                print('p')
+                print(p.coeff)
+                print('m')
+                print(m)
+                if all([i<j for i,j in zip(l,m)]) and len(l) == len(m):
                     c = [j-i for i,j in zip(l,m)]
+                    print('largest mon val')
+                    print(self.largest_mon.val)
                     c_coeff = np.zeros(np.array(self.largest_mon.val)+1)
-                    c_coeff[tuple(c)] = 1 
-                    if isinstance(p, MultiCheb):
-                        c = MultiCheb(c_coeff)
-                    elif isinstance(p,MultiPower):
-                        c = MultiPower(c_coeff)
-                    r = c*p
-                    self.add_poly_to_matrix(r)
-                    break
+                    print('c all zeros')
+                    if c_coeff.all() != 0:
+                        print('c')
+                        print(tuple(c))
+                        print('c_coeff')
+                        print(c_coeff)
+                        c_coeff[tuple(c)] = 1 
+                        if isinstance(p, MultiCheb):
+                            c = MultiCheb(c_coeff)
+                        elif isinstance(p,MultiPower):
+                            c = MultiPower(c_coeff)
+                        print('p')
+                        print(p.coeff)
+                        print('c')
+                        print(c.coeff)
+                        r = c*p
+                        self.add_poly_to_matrix(r)
+                        break
+                    else:
+                        pass
+                else:
+                    print("p does not divide m")
         pass 
 
 

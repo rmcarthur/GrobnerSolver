@@ -61,7 +61,6 @@ class MultiPower(object):
                 return current
 
         if len(current.nonzero()) > 0:
-            ##### This is the problem ######
             first_z = -1 * next(j for j,v in enumerate(current[::-1]) if v==0) - 1
             # Finds the first non-zero afte a zero and iterates from there to create the 
             # Next high state
@@ -108,10 +107,6 @@ class MultiPower(object):
             low_state[-1] = self.state_sum
             return low_state
         else:
-            #print('State sum: {}'.format(self.state_sum))
-            #print('terms: {}'.format(self.dim))
-            #print(self.shape)
-            #raw_input()
             slots = int(self.state_sum//max_term)
             remainder = self.state_sum % max_term
             low_state = np.zeros_like(current)
@@ -135,9 +130,13 @@ class MultiPower(object):
         if self.order == 'grevlex':
             gen = self.grevlex_gen()
             for idx in gen:
+                #print(idx)
+                #print(self.coeff[tuple(idx)])
                 if self.coeff[tuple(idx)] != 0:
                     self.lead_term = idx
                     self.lead_coeff = self.coeff[tuple(idx)]
+                    #print('Updated Lead_coeff')
+                    #print(self.lead_coeff)
                     break
         #print('Leading Coeff is {}'.format(self.lead_term))
 
@@ -199,5 +198,5 @@ class MultiPower(object):
         '''
         here we add leading terms?
         '''
-        return MultiPower(fftconvolve(self.coeff, other.coeff))
+        return MultiPower(np.around(fftconvolve(self.coeff, other.coeff),6))
 
