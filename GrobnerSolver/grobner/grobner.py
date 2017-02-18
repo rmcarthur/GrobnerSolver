@@ -32,10 +32,11 @@ class Grobner(object):
         self.term_set = set()
         self.term_dict = {}
         self.f_diff = 1
-        #self.solve()
+        self._build_matrix()
 
     def solve(self):
-        for i in xrange():
+        count = 0
+        while self.f_diff != 0:
             self.add_s_to_matrix()
             self.add_r_to_matrix()
             P,L,U = lu(self.matrix.values)
@@ -48,17 +49,21 @@ class Grobner(object):
             new_fs = pd.DataFrame(new_fs,columns=self.matrix.columns)
             new_fs = new_fs[(new_fs.T != 0).any()] # Remove all totally zero rows
             new_fs = new_fs.loc[:, (new_fs != 0).any(axis=0)] # Remove all totally zero columns
+            print(new_fs)
             #print(new_fs)
             #print(list(self.largest_mon.val))
             #print(new_fs.index)
             self.polys = self.make_poly_list(new_fs)
             self.f_diff = len(self.polys) - self.f_len
+            print('F_DIFF')
+            print(self.f_diff)
             self.f_len = len(self.polys)
             #self.polys = self.make_poly_list(new_fs)
             count += 1
-            print(count)
+            print('polys')
             print(len(self.polys))
             for p in self.polys:
+                p.normalize()
                 print(p.coeff)
         return self.polys
 
@@ -68,18 +73,11 @@ class Grobner(object):
         '''
         make a list of polynomials based on rows of dataframe
         '''
-        print(self.largest_mon.val)
         size = list(self.largest_mon.val)
         size  = np.array(size + [len(df.index)-1])
-        print(size)
         new_f_list = np.squeeze(np.zeros(size+1))
-        print('new f')
-        print(new_f_list)
         for i in df.columns:
             index = [int(j) for j in df[i].name[1:-1].split()]
-            print('index')
-            print(index)
-            #TODO: Fix this for multiple dimensions
             new_f_list[index[1],index[0],:] = df[i].values
         f_list = []
         for i in xrange(len(df.index)):
@@ -91,7 +89,6 @@ class Grobner(object):
                 #print('Power')
                 f_list.append(MultiPower(new_f_list[:,:,i]))
         return f_list
-        pass
 
     def _build_matrix(self):
         """
@@ -131,11 +128,15 @@ class Grobner(object):
         Calculates the S-polynomial of a,b
         '''
         lcm = self._lcm(a,b)
+        a_lead_val = a.coeff[tuple(a.lead_term)]
+        b_lead_val = b.coeff[tuple(b.lead_term)]
         a_coeffs = np.zeros_like(a.coeff).astype('float')
-        a_coeffs[tuple([int(i-j) for i,j in zip(lcm, a.lead_term)])] = (a.coeff[tuple(a.lead_term)] * b.coeff[tuple(b.lead_term)])/(a.coeff[tuple(a.lead_term)])
+        a_coeffs[tuple([int(i-j) for i,j in zip(lcm, a.lead_term)])] = (a_lead_val *
+                b_lead_val)/(a.coeff[tuple(a.lead_term)])
 
         b_coeffs = np.zeros_like(b.coeff).astype('float')
-        b_coeffs[tuple([int(i-j) for i,j in zip(lcm, b.lead_term)])] = (a.coeff[tuple(a.lead_term)] * b.coeff[tuple(b.lead_term)])/(b.coeff[tuple(b.lead_term)])
+        b_coeffs[tuple([int(i-j) for i,j in zip(lcm, b.lead_term)])] = (a_lead_val *
+                b_lead_val)/(b.coeff[tuple(b.lead_term)])
 
         if isinstance(a, MultiPower) and isinstance(b,MultiPower):
             b_ = MultiPower(np.round(b_coeffs,dec))
@@ -171,7 +172,6 @@ class Grobner(object):
         This takes all possible combinaions of s polynomials and adds them to the Grobner Matrix
         '''
         for a, b in itertools.combinations(self.polys, 2):
-            print('calculating s for a and b')
             submatrix = pd.DataFrame()
             if not self._coprime(a.lead_coeff,b.lead_coeff): #Checks for co-prime coeffs
                 s = self.calc_s(a,b) # Calculate the S polynomail
@@ -187,7 +187,6 @@ class Grobner(object):
                             #print(self.largest_mon)
                             self.largest_mon = idx_term
                     submatrix[str(idx)] = pd.Series([s.coeff[tuple(idx)]]) 
-                print(submatrix)
             self.matrix = self.matrix.append(submatrix)
             self.matrix = self.matrix.fillna(0)
             self.matrix = self.matrix[(self.matrix.T != 0).any()] # Remove all totally zero rows
@@ -199,8 +198,6 @@ class Grobner(object):
         submatrix = pd.DataFrame()
         for idx in p.grevlex_gen():
             submatrix[str(idx)] = pd.Series([p.coeff[tuple(idx)]])
-        print('r to add')
-        print(submatrix)
         if all(v==0 for v in submatrix):
             print('all zeros')
             return
@@ -215,33 +212,18 @@ class Grobner(object):
         '''
         for monomial in self.term_set:
             m = list(monomial)
-            print(m)
             for p in self.polys:
                 l = list(p.lead_term)
-                print('p')
-                print(p.coeff)
-                print('m')
-                print(m)
                 if all([i<j for i,j in zip(l,m)]) and len(l) == len(m):
                     c = [j-i for i,j in zip(l,m)]
-                    print('largest mon val')
-                    print(self.largest_mon.val)
                     c_coeff = np.zeros(np.array(self.largest_mon.val)+1)
                     print('c all zeros')
                     if c_coeff.all() != 0:
-                        print('c')
-                        print(tuple(c))
-                        print('c_coeff')
-                        print(c_coeff)
                         c_coeff[tuple(c)] = 1 
                         if isinstance(p, MultiCheb):
                             c = MultiCheb(c_coeff)
                         elif isinstance(p,MultiPower):
                             c = MultiPower(c_coeff)
-                        print('p')
-                        print(p.coeff)
-                        print('c')
-                        print(c.coeff)
                         r = c*p
                         self.add_poly_to_matrix(r)
                         break
@@ -250,6 +232,4 @@ class Grobner(object):
                 else:
                     print("p does not divide m")
         pass 
-
-
 

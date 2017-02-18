@@ -200,3 +200,6 @@ class MultiPower(object):
         '''
         return MultiPower(np.around(fftconvolve(self.coeff, other.coeff),6))
 
+    def normalize(self):
+        self.coeff /= self.coeff[tuple(self.lead_term)]
+

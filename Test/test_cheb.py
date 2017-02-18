@@ -6,6 +6,13 @@ import unittest
 
 class TestMultiCheb(unittest.TestCase):
 
+
+    def test_gen(self):
+        '''
+        Tests the generator
+        '''
+        pass
+
     def test_add(self):
         a1 = np.arange(27).reshape((3,3,3))
         Test2 = MultiCheb(a1)
