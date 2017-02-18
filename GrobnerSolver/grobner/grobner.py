@@ -43,13 +43,9 @@ class Grobner(object):
             P_argmax = np.argmax(P,axis=1)
             rows_to_keep = P_argmax < self.fs_len
             new_fs = U[rows_to_keep]
-            print('new_fs')
-            print(self.matrix.columns)
-            print(new_fs)
             new_fs = pd.DataFrame(new_fs,columns=self.matrix.columns)
             new_fs = new_fs[(new_fs.T != 0).any()] # Remove all totally zero rows
             new_fs = new_fs.loc[:, (new_fs != 0).any(axis=0)] # Remove all totally zero columns
-            print(new_fs)
             #print(new_fs)
             #print(list(self.largest_mon.val))
             #print(new_fs.index)
@@ -131,12 +127,11 @@ class Grobner(object):
         a_lead_val = a.coeff[tuple(a.lead_term)]
         b_lead_val = b.coeff[tuple(b.lead_term)]
         a_coeffs = np.zeros_like(a.coeff).astype('float')
-        a_coeffs[tuple([int(i-j) for i,j in zip(lcm, a.lead_term)])] = (a_lead_val *
-                b_lead_val)/(a.coeff[tuple(a.lead_term)])
+        a_coeffs[tuple([int(i-j) for i,j in zip(lcm, a.lead_term)])] = 1./(a.coeff[tuple(a.lead_term)])
+
 
         b_coeffs = np.zeros_like(b.coeff).astype('float')
-        b_coeffs[tuple([int(i-j) for i,j in zip(lcm, b.lead_term)])] = (a_lead_val *
-                b_lead_val)/(b.coeff[tuple(b.lead_term)])
+        b_coeffs[tuple([int(i-j) for i,j in zip(lcm, b.lead_term)])] = 1./(b.coeff[tuple(b.lead_term)])
 
         if isinstance(a, MultiPower) and isinstance(b,MultiPower):
             b_ = MultiPower(np.round(b_coeffs,dec))
@@ -210,25 +205,28 @@ class Grobner(object):
         '''
         Makes Heap out of all monomials, and finds lcms to add them into the matrix
         '''
+        monheap = maxheap.MaxHeap()
         for monomial in self.term_set:
+            monheap.heappush(monomial)
             m = list(monomial)
+
+        for i in xrange(len(self.term_set)):
+            m = monheap.heappop()
             for p in self.polys:
                 l = list(p.lead_term)
-                if all([i<j for i,j in zip(l,m)]) and len(l) == len(m):
+                divide = [i<=j for i,j in zip(l,m)]
+                if all(divide) and len(l) == len(m):
                     c = [j-i for i,j in zip(l,m)]
                     c_coeff = np.zeros(np.array(self.largest_mon.val)+1)
-                    print('c all zeros')
-                    if c_coeff.all() != 0:
-                        c_coeff[tuple(c)] = 1 
-                        if isinstance(p, MultiCheb):
-                            c = MultiCheb(c_coeff)
-                        elif isinstance(p,MultiPower):
-                            c = MultiPower(c_coeff)
-                        r = c*p
-                        self.add_poly_to_matrix(r)
-                        break
+                    c_coeff[tuple(c)] = 1.
+                    if isinstance(p, MultiCheb):
+                        c = MultiCheb(c_coeff)
+                    elif isinstance(p,MultiPower):
+                        c = MultiPower(c_coeff)
                     else:
-                        pass
+                        raise TypeError('Unsupported poly type')
+                    r = c*p
+                    self.add_poly_to_matrix(r)
                 else:
                     print("p does not divide m")
         pass 

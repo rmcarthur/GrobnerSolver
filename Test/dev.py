@@ -6,6 +6,8 @@ from GrobnerSolver.polys.multi_cheb import MultiCheb
 from GrobnerSolver.polys.multi_power import MultiPower
 from GrobnerSolver.grobner.grobner import Grobner
 from GrobnerSolver.grobner import maxheap
+import pandas as pd
+from scipy.linalg import lu
 
 
 
@@ -16,7 +18,28 @@ a2 = np.array([[1,0],[0,2]])
 c1= MultiPower(a1)
 c2 = MultiPower(a2)
 grob = Grobner([c1,c2])
-grob.solve()
+grob.add_s_to_matrix()
+print(grob.matrix)
+raw_input()
+grob.add_r_to_matrix()
+print(grob.matrix)
+raw_input()
+print('fs')
+print(grob.fs_len)
+columns = grob.matrix.columns
+print(columns)
+P,L,U = lu(grob.matrix.values)
+print('U')
+print(U)
+P_argmax = np.argmax(P,axis=1)
+rows_to_keep = P_argmax < grob.fs_len
+new_fs = U[rows_to_keep]
+new_fs = pd.DataFrame(new_fs,columns=grob.matrix.columns)
+new_fs = new_fs[(new_fs.T != 0).any()] # Remove all totally zero rows
+new_fs = new_fs.loc[:, (new_fs != 0).any(axis=0)] # Remove all totally zero columns
+print(new_fs)
+raw_input()
+#grob.solve()
 
 
 
