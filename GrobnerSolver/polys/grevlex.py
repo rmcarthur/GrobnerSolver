@@ -29,23 +29,20 @@ class MultiCheb(object):
         output- the next step in ordering
     """
 
-    def __init__(self, coeff, order='grevlex', lead_term=None):
+    def __init__(self, dim, shape, order='grevlex', lead_term=None):
         '''
         terms, int- number of chebyshev polynomials each variable can have. Each dimension will have term terms
         dim, int- number of different variables, how many dim our tensor will be
         order, string- how you want to order your polynomials. Grevlex is default
         '''
-        self.coeff = coeff
-        self.dim = self.coeff.ndim
-        self.terms = np.prod(self.coeff.shape)
-        self.order = order
-        self.shape = self.coeff.shape
+        #self.coeff = coeff
+        self.dim = dim
+        self.shape = shape
+        #self.dim = self.coeff.ndim
+        #self.terms = np.prod(self.coeff.shape)
+        #self.order = order
+        #self.shape = self.coeff.shape
         self.max_term = np.max(self.shape) -1
-
-        if lead_term is None:
-            self.update_lead_term()
-        else:
-            self.lead_term = lead_term
 
 
     def next_step(self, current):

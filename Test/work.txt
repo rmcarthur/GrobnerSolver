@@ -1,0 +1,3 @@
+Add monomial Multiplication
+Check if cheb matches power
+Basic speed test with high dimensional bases

@@ -9,6 +9,7 @@ import os,sys
 sys.path.append('/'.join(os.path.dirname(os.path.abspath(__file__)).split('/')[:-2]))
 from GrobnerSolver.polys.multi_cheb import MultiCheb
 from GrobnerSolver.polys.multi_power import MultiPower
+
 from scipy.linalg import lu
 
 class Grobner(object):
@@ -18,7 +19,6 @@ class Grobner(object):
         polys -- a list of polynomials that generate your ideal
         self.org_len - Orginal length of the polys passed in
         '''
-
         if isinstance(polys[0], MultiCheb):
             self.cheb_type = True
         else:
@@ -30,6 +30,7 @@ class Grobner(object):
         self.matrix = pd.DataFrame()
         self.label = []
         self.label_count = 0
+        self.np_matrix = np.zeros([0,0])
         self.term_set = set()
         self.term_dict = {}
         self.f_diff = 1
@@ -39,11 +40,16 @@ class Grobner(object):
         count = 0
         while self.f_diff != 0:
             self.add_s_to_matrix()
+            print(self.matrix)
             self.add_r_to_matrix()
-            ### Is the problem because you are just reducing straight across?  ### You have to sort the columns, and reduce on sorted colmns print(self.matrix)
+            print(self.matrix)
+
+            ### Is the problem because you are just reducing straight across? 
+            ### You have to sort the columns, and reduce on sorted colmns
+            print(self.matrix.values)
             P,L,U = lu(self.matrix.values)
-            P_argmax = np.argmax(P,axis=1)
-            rows_to_keep = P_argmax < self.fs_len
+            L_argmax = np.argmax(L,axis=1)
+            rows_to_keep = L_argmax < self.fs_len
             new_fs = U[rows_to_keep]
             new_fs = pd.DataFrame(new_fs,columns=self.matrix.columns)
             new_fs = new_fs[(new_fs.T != 0).any()] # Remove all totally zero rows
@@ -52,12 +58,16 @@ class Grobner(object):
             #print(list(self.largest_mon.val))
             #print(new_fs.index)
             self.f_diff = len(self.polys) - self.f_len
+            print('F_DIFF')
+            print(self.f_diff)
             self.polys = self.make_polys_list(new_fs)
+            raw_input()
             self.f_len = len(self.polys)
             count += 1
-
+            print('polys')
+            print(len(self.polys))
             for p in self.polys:
-                #p.normalize()
+                p.normalize()
                 print(p.coeff)
             #UPDATE LARGEST MON VAL
         return self.polys
@@ -83,13 +93,20 @@ class Grobner(object):
         '''
         make a list of polynomials based on rows of dataframe
         '''
+        print(df)
         self.get_size(df)
         size = [self.max_size]*2 #Obvy hard coded for 2-d
         size  = np.array(size + [len(df.index)-1])
+        print(size)
+        raw_input('SIIIZE')
         new_f_list = np.squeeze(np.zeros(size+1))
+        print(new_f_list.shape)
         for i in df.columns:
-            index = [int(j) for j in i[1:-1].split(' ')]
-            new_f_list[index[1],index[0],:] = df[i].values
+            i = [int(j) for j in i[1:-1].split(' ')]
+            raw_input()
+            #index = [int(j) for j in df[i].name[1:-1].split()]
+            print(df[i].values)
+            #new_f_list[i[1],i[0],:] = df[i].values
         f_list = []
         for i in xrange(len(df.index)):
             #TODO: Fix this for multiple dimensions
@@ -105,14 +122,21 @@ class Grobner(object):
         '''
         make a list of polynomials based on rows of dataframe
         '''
+        print(df)
+        print(df.describe())
+        raw_input()
+
         size = list(self.largest_mon.val)
         size  = np.array(size + [len(df.index)-1])
         new_f_list = np.squeeze(np.zeros(size+1))
-
+        for i in df:
+            print(i)
+            raw_input()
         for i in df.columns:
             i = [int(j) for j in i[1:-1].split(' ')]
             print(i)
             raw_input()
+            #index = [int(j) for j in df[i].name[1:-1].split()]
             new_f_list[i[1],i[0],:] = df[i].values
         f_list = []
         for i in xrange(len(df.index)):
@@ -165,7 +189,6 @@ class Grobner(object):
         lcm = self._lcm(a,b)
         a_lead_val = a.coeff[tuple(a.lead_term)]
         b_lead_val = b.coeff[tuple(b.lead_term)]
-
         a_coeffs = np.zeros_like(a.coeff).astype('float')
         a_coeffs[tuple([int(i-j) for i,j in zip(lcm, a.lead_term)])] = 1./(a.coeff[tuple(a.lead_term)])
 
@@ -181,23 +204,19 @@ class Grobner(object):
             a_ = MultiCheb(np.round(a_coeffs,dec))
         else:
             raise ValueError('Incompatiable polynomials')
-
         a1 = a_*a
         b1 = b_*b
         s = a_ * a - b_ * b
-
         if isinstance(a, MultiPower) and isinstance(b,MultiPower):
             s = MultiPower(np.round(s.coeff,dec))
         elif isinstance(a, MultiCheb) and isinstance(b,MultiCheb):
             s = MultiCheb(np.round(s.coeff,dec))
         else:
             raise ValueError('Incompatiable polynomials')
-
         return s
 
     def _coprime(self,a,b):
         '''
-        This is dead wrong. Supposed to be if each one is less than the other, if the monomials are coprime
         a,b - ints
 
         Returns:
@@ -212,20 +231,26 @@ class Grobner(object):
         '''
         for a, b in itertools.combinations(self.polys, 2):
             submatrix = pd.DataFrame()
-            #if not self._coprime(a.lead_coeff,b.lead_coeff): #Checks for co-prime coeffs # Add it by minimium
-            s = self.calc_s(a,b) # Calculate the S polynomail
-            for idx in s.grevlex_gen():
-               idx_term = maxheap.TermOrder(tuple(idx)) # For each term in polynomial, throw it on the heap
-               if not idx_term.val in self.term_set: # Add all new polynomials
-                   self.term_set.add(idx_term.val)
-                   self.label.append(tuple(idx))
-                   if idx_term > self.largest_mon:
-                       self.largest_mon = idx_term
-               submatrix[str(idx)] = pd.Series([s.coeff[tuple(idx)]]) 
+            if not self._coprime(a.lead_coeff,b.lead_coeff): #Checks for co-prime coeffs
+                s = self.calc_s(a,b) # Calculate the S polynomail
+                for idx in s.grevlex_gen():
+                    #print(idx)
+                    idx_term = maxheap.TermOrder(tuple(idx)) # For each term in polynomial, throw it on the heap
+                    if not idx_term.val in self.term_set: # Add all new polynomials
+                        self.term_set.add(idx_term.val)
+                        self.label.append(tuple(idx))
+                        #print(idx_term)
+                        if idx_term > self.largest_mon:
+                            #print('new largest mon')
+                            #print(self.largest_mon)
+                            self.largest_mon = idx_term
+                    submatrix[str(idx)] = pd.Series([s.coeff[tuple(idx)]]) 
             self.matrix = self.matrix.append(submatrix)
             self.matrix = self.matrix.fillna(0)
             self.matrix = self.matrix[(self.matrix.T != 0).any()] # Remove all totally zero rows
             self.fs_len = len(self.matrix.index)
+        #print('S polynomials added')
+        #print(self.matrix)
 
     def add_poly_to_matrix(self,p):
         submatrix = pd.DataFrame()
@@ -239,27 +264,6 @@ class Grobner(object):
         self.matrix = self.matrix[(self.matrix.T != 0).any()] # Remove all totally zero rows
         pass
 
-
-    def __add_r__(self,m):
-        for p in self.polys:
-            l = list(p.lead_term)
-            divide = [i<=j for i,j in zip(l,m)]
-            if all(divide) and len(l) == len(m):
-                c = [j-i for i,j in zip(l,m)]
-                c_coeff = np.zeros(np.array(self.largest_mon.val)+1)
-                c_coeff[tuple(c)] = 1.
-                if isinstance(p, MultiCheb):
-                    c = MultiCheb(c_coeff)
-                elif isinstance(p,MultiPower):
-                    c = MultiPower(c_coeff)
-                else:
-                    raise TypeError('Unsupported poly type')
-                r = c*p
-                print(r.coeff)
-                self.add_poly_to_matrix(r)
-                return
-
-
     def add_r_to_matrix(self):
         '''
         Makes Heap out of all monomials, and finds lcms to add them into the matrix
@@ -267,10 +271,27 @@ class Grobner(object):
         monheap = maxheap.MaxHeap()
         for monomial in self.term_set:
             monheap.heappush(monomial)
-            #m = list(monomial)
+            m = list(monomial)
+
         for i in xrange(len(self.term_set)):
             m = monheap.heappop()
             print(m)
-            self.__add_r__(m)
+            for p in self.polys:
+                l = list(p.lead_term)
+                divide = [i<=j for i,j in zip(l,m)]
+                if all(divide) and len(l) == len(m):
+                    c = [j-i for i,j in zip(l,m)]
+                    c_coeff = np.zeros(np.array(self.largest_mon.val)+1)
+                    c_coeff[tuple(c)] = 1.
+                    if isinstance(p, MultiCheb):
+                        c = MultiCheb(c_coeff)
+                    elif isinstance(p,MultiPower):
+                        c = MultiPower(c_coeff)
+                    else:
+                        raise TypeError('Unsupported poly type')
+                    r = c*p
+                    self.add_poly_to_matrix(r)
+                else:
+                    print("p does not divide m")
         pass 
 

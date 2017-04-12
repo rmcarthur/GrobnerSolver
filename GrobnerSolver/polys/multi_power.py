@@ -1,4 +1,5 @@
 from __future__ import division, print_function
+import itertools
 import numpy as np
 from scipy.signal import convolve, fftconvolve
 
@@ -192,14 +193,36 @@ class MultiPower(object):
         '''
         Here we subtract the two polys
         '''
-        return MultiPower(self.coeff - other.coeff)
+        if self.shape != other.shape:
+            new_self, new_other = self.match_size(self,other)
+        else:
+            new_self, new_other = self, other
+        return MultiPower(new_self.coeff - new_other.coeff)
 
     def __mul__(self,other):
         '''
         here we add leading terms?
         '''
-        return MultiPower(np.around(fftconvolve(self.coeff, other.coeff),6))
+        if self.shape != other.shape:
+            new_self, new_other = self.match_size(self,other)
+        else:
+            new_self, new_other = self, other
+        return MultiPower(np.around(fftconvolve(new_self.coeff, new_other.coeff),6))
 
     def normalize(self):
         self.coeff /= self.coeff[tuple(self.lead_term)]
 
+    def match_size(self,a,b):
+        '''
+        Matches the size of the polynomials
+        '''
+        new_shape = [max(i,j) for i,j in itertools.izip_longest(a.shape, b.shape)]
+        add_a = [i-j for i,j in zip(new_shape, a.shape)]
+        add_b = [i-j for i,j in zip(new_shape, b.shape)]
+        add_a_list = np.zeros((2,len(new_shape)))
+        add_b_list = np.zeros((2,len(new_shape)))
+        add_a_list[:,1] = add_a
+        add_b_list[:,1] = add_b
+        a = MultiPower(np.pad(a.coeff,add_a_list.astype(int),'constant'))
+        b = MultiPower(np.pad(b.coeff,add_b_list.astype(int),'constant'))
+        return a,b
